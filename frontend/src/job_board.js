@@ -16,11 +16,27 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import moment from 'moment';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 
 import './job_board.scss';
 
+const LOCATIONS = {
+  'chicago': 'Chicago',
+  'san+francisco': 'San Francisco',
+  'phoenix': 'Phoenix',
+  'london': 'London',
+  'beijing': 'Beijing',
+  'paris': 'Paris',
+};
+
+const LANGUAGE = {
+  'javascript': 'Javascript',
+  'java': 'Java',
+  'python': 'Python',
+  'react': 'React',
+  'ruby': 'Ruby',
+  'go': 'Go',
+};
 
 class JobBoard extends Component {
   constructor(props) {
@@ -31,12 +47,16 @@ class JobBoard extends Component {
       isFetechingJobs: false,
       fetchingFailed: false,
       currentJob: {},
-      currentPage: 0
+      currentPage: 0,
+      location: '',
+      language: '',
+      search: '',
     }
   }
 
   componentDidMount() {
     this.setState({
+      fetchingFailed: false,
       isFetechingJobs: true,
     }, () => {
       axios.get('/positions')
@@ -46,7 +66,6 @@ class JobBoard extends Component {
             isFetechingJobs: false,
             currentJob: response.data[0],
           });
-          console.log(response);
         })
         .catch((error) =>  {
           this.setState({ fetchingFailed: true });
@@ -67,12 +86,43 @@ class JobBoard extends Component {
     this.setState({ currentJob });
   }
 
+  searchForJob = (e) => {
+    if (e && e.keyCode !== 13) return;
+    console.log(e);
+    const { currentPage, location,  language,  search } = this.state
+
+    this.setState({
+      fetchingFailed: false,
+      isFetechingJobs: true,
+    }, () => {
+      axios.get('/positions', {
+        params: {
+          search,
+          page: currentPage,
+          location,
+          language,
+        }
+      }).then((response) => {
+          this.setState({
+            jobs: response.data,
+            isFetechingJobs: false,
+            currentJob: response.data[0],
+          });
+        })
+        .catch((error) =>  {
+          this.setState({ fetchingFailed: true });
+          console.log('crap', error);
+        });
+    })
+  }
+
   fetchPage = (pageDirection) => {
     const { currentPage } = this.state;
     let page = null;
     page = pageDirection === 'back' ? Math.max(0, currentPage - 1) : Math.min(4, currentPage + 1)
 
     this.setState({
+      fetchingFailed: false,
       isFetechingJobs: true,
     }, () => {
       axios.get('/positions', {
@@ -84,7 +134,6 @@ class JobBoard extends Component {
             isFetechingJobs: false,
             currentJob: response.data[0],
           });
-          console.log(response);
         })
         .catch((error) =>  {
           this.setState({ fetchingFailed: true });
@@ -94,7 +143,8 @@ class JobBoard extends Component {
   }
 
   render() {
-    const { jobs, currentJob, currentPage, isFetechingJobs } = this.state;
+    const { jobs, currentJob, currentPage, isFetechingJobs,
+            location, language, fetchingFailed } = this.state;
 
     return (
       <div className="App">
@@ -108,6 +158,8 @@ class JobBoard extends Component {
               <TextField
                 id="standard-basic"
                 label="Enter job title or keyword and use the filters below to get best results"
+                onChange={(e) => this.setState({search : e.target.value})}
+                onKeyDown={(e) => this.searchForJob(e)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -116,7 +168,11 @@ class JobBoard extends Component {
                   ),
                 }}
               />
-              <Button variant="contained">Search</Button>
+              <Button
+                variant="contained"
+                onClick={() => this.searchForJob()}>
+                Search
+              </Button>
             </Grid>
             <Grid item xs={12} classes={{root: 'select-container'}}>
               <FormControl classes={{root: 'city-select'}}>
@@ -124,15 +180,14 @@ class JobBoard extends Component {
                 <Select
                   labelId="city-select-label"
                   id="city-select-label"
-                  value=""
+                  value={location}
+                  onChange={(e) => this.setState({location: e.target.value})}
                 >
                   <MenuItem value="">None</MenuItem>
-                  <MenuItem value={'chicago'}>Chicago</MenuItem>
-                  <MenuItem value={'san-francisco'}>San Francisco</MenuItem>
-                  <MenuItem value={'phoenix'}>Phoenix</MenuItem>
-                  <MenuItem value={'london'}>London</MenuItem>
-                  <MenuItem value={'beijing'}>Beijing</MenuItem>
-                  <MenuItem value={'paris'}>Paris</MenuItem>
+                  {Object.entries(LOCATIONS).map(([key, value]) => (
+                      <MenuItem key={key} value={key}>{value}</MenuItem>
+                    ))
+                  }
                 </Select>
               </FormControl>
               <FormControl classes={{root: 'job-select'}}>
@@ -140,25 +195,29 @@ class JobBoard extends Component {
                 <Select
                   labelId="job-select-label"
                   id="job-select-label"
-                  value=""
+                  value={language}
+                  onChange={(e) => this.setState({language: e.target.value})}
                 >
                   <MenuItem value="">None</MenuItem>
-                  <MenuItem value={'javascript'}>Javascript</MenuItem>
-                  <MenuItem value={'java'}>Java</MenuItem>
-                  <MenuItem value={'python'}>Python</MenuItem>
-                  <MenuItem value={'react'}>React</MenuItem>
-                  <MenuItem value={'ruby'}>Ruby</MenuItem>
-                  <MenuItem value={'go'}>Go</MenuItem>
+                  {Object.entries(LANGUAGE).map(([key, value]) => (
+                      <MenuItem key={key} value={key}>{value}</MenuItem>
+                    ))
+                  }
                 </Select>
               </FormControl>
             </Grid>
             <Grid container classes={{root: 'jobs-list-container'}}>
-              {isFetechingJobs &&
+              {fetchingFailed &&
+                <Grid item xs={12} classes={{root: 'failed'}}>
+                  <div>No jobs found</div>
+                </Grid>
+              }
+              {isFetechingJobs && !fetchingFailed &&
                 <Grid item xs={12} classes={{root: 'progress-container'}}>
                   <div className="loader"></div>
                 </Grid>
               }
-              {!isFetechingJobs &&
+              {!isFetechingJobs && !fetchingFailed &&
                 <React.Fragment>
                   <Grid item xs={5} classes={{root: 'jobs-list'}}>
                     <List>
