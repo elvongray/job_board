@@ -16,6 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from jobs.views import JobView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('positions/', JobView.as_view()),
 ]
