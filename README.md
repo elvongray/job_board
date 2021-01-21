@@ -3,6 +3,7 @@
 Test project for DoneStreet job application
 
 # Develop
+The project was built using React on the frontend and Django/Python on the backend
 
 ## Backend
  - Install a python virtual environment to isolate backend requirements, you can use
