@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from jobs.models import Searches
+
+class SearchesAdmin(admin.ModelAdmin):  # add this
+  list_display = ('ip_address', 'description', 'language', 'location', 'time') # add this
+
+admin.site.register(Searches, SearchesAdmin)

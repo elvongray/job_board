@@ -4,6 +4,8 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.views import View
 from django.core.cache import cache
 
+from jobs.models import Searches
+
 
 class JobView(View):
     def fetch_requests(self, params={}):
@@ -19,7 +21,11 @@ class JobView(View):
         response = self.fetch_requests(params)
 
         if response.ok and response.json():
-            import ipdb; ipdb.set_trace()
+            search = Searches(
+                location=location, description=search, language=language, ip_address=request.META.get('REMOTE_ADDR')
+            )
+            search.save()
+
             return HttpResponse(response.text, content_type="application/json")
         else:
             return HttpResponseNotFound()
