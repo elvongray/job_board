@@ -1,10 +1,14 @@
 import requests
+import json
 
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.views import View
 from django.core.cache import cache
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from jobs.models import Searches
+from jobs.models import UserClicks
 
 
 class JobView(View):
@@ -70,3 +74,17 @@ class JobView(View):
 
         return HttpResponse(httpResponse, content_type="application/json")
 
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserClicksView(View):
+    def post(self, request):
+        body = json.loads(request.body)
+
+        if body.get('path'):
+            obj, _ = UserClicks.objects.get_or_create(path=body.get('path'))
+            obj.number_of_clicks += 1
+            obj.save()
+            return HttpResponse('', content_type="application/json")
+        else:
+            return HttpResponseBadRequest()

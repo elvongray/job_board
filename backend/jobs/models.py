@@ -9,3 +9,12 @@ class Searches(models.Model):
 
     def _str_(self):
         return self.ip_address
+
+
+
+class UserClicks(models.Model):
+    path = models.CharField(max_length=240, blank=True)
+    number_of_clicks = models.SmallIntegerField(default=0)
+
+    def _str_(self):
+        return self.path

@@ -155,6 +155,16 @@ class JobBoard extends Component {
     );
   };
 
+  userClick = () => {
+    let path = window.location.pathname;
+
+    axios
+      .post('/user_click/', { path: path })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
   render() {
     const {
       jobs,
@@ -169,7 +179,7 @@ class JobBoard extends Component {
     return (
       <div className="App">
         <header className="App-header">
-          <h1>Job Search</h1>
+          <h1 onClick={() => this.userClick()}>Job Search</h1>
           <p>
             Find your next career at some of the best companies in the world
           </p>

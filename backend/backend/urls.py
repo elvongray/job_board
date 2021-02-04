@@ -17,8 +17,10 @@ from django.contrib import admin
 from django.urls import path
 
 from jobs.views import JobView
+from jobs.views import UserClicksView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('positions/', JobView.as_view()),
+    path('user_click/', UserClicksView.as_view())
 ]
